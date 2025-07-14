@@ -29,14 +29,25 @@ jobs:
       run: |
         python crawler.py
     
+    - name: 检查生成的文件
+      run: |
+        echo "当前目录内容："
+        ls -la
+        echo "检查是否有articles文件夹："
+        ls -la articles/ || echo "articles文件夹不存在"
+        echo "检查是否有epub文件："
+        ls -la *.epub || echo "没有找到epub文件"
+    
     - name: 上传结果
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: 爬取结果
         path: |
           articles/
           *.epub
         retention-days: 30
+        if-no-files-found: warn
     
     - name: 提交结果到仓库
       run: |
