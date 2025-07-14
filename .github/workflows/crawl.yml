@@ -7,6 +7,9 @@ on:
   schedule:
     - cron: '0 0 * * 0'  # 每周日午夜运行
 
+permissions:
+  contents: write  # 允许写入仓库内容
+
 jobs:
   crawl:
     runs-on: ubuntu-latest
@@ -14,6 +17,8 @@ jobs:
     steps:
     - name: 检出代码
       uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
     
     - name: 设置Python环境
       uses: actions/setup-python@v4
@@ -50,9 +55,14 @@ jobs:
         if-no-files-found: warn
     
     - name: 提交结果到仓库
+      if: success()
       run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add .
-        git commit -m "更新爬取结果 $(date)" || exit 0
-        git push
+        git config --local user.email "actions@github.com"
+        git config --local user.name "GitHub Actions"
+        git add -A
+        if git diff --staged --quiet; then
+          echo "没有文件变化，跳过提交"
+        else
+          git commit -m "🤖 自动更新爬取结果 - $(date '+%Y-%m-%d %H:%M:%S')"
+          git push
+        fi
